@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql
+    environment:
+      SA_PASSWORD: "Password12345qfgsd!"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+
+  patientapi:
+    build:
+      context: .
+      dockerfile: PatientApi/Dockerfile
+    container_name: patientapi
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ConnectionStrings__DefaultConnection: "Server=mssql;Database=PatientDb;User=sa;Password=Password12345qfgsd!;TrustServerCertificate=True;"
+    ports:
+      - "5000:8080"
+    depends_on:
+      - mssql
+
+  patientcli:
+    build:
+      context: .
+      dockerfile: PatientCli/Dockerfile
+    container_name: patientcli
+    depends_on:
+      - patientapi
+    environment:
+      API_URL: "http://patientapi:8080/api/patient"
+    entrypoint: ["dotnet", "PatientCli.dll", '100']
+
+volumes:
+  mssql_data:
