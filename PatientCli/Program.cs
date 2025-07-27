@@ -33,9 +33,14 @@ class Program
         int count = args.Length > 0 && int.TryParse(args[0], out var c) ? c : 10;
         string apiUrl = Environment.GetEnvironmentVariable("API_URL") ?? "http://localhost:5000/api/patients";
 
-        await WaitForApiAsync(apiUrl.Replace("/api/patient", "/swagger"), 60);
+        try {
+            await WaitForApiAsync(apiUrl.Replace("/api/patient", "/swagger"), 60);
+        } catch (Exception ex) {
+            Console.WriteLine($"Ошибка при ожидании запуска API: {ex.Message}");
+            return;
+        }
 
-        var faker = new Bogus.Faker<PatientDto>()
+        var faker = new Faker<PatientDto>()
             .RuleFor(p => p.Use, f => f.PickRandom<UseTypeEnum>())
             .RuleFor(p => p.Family, f => f.Name.LastName())
             .RuleFor(p => p.Given, f => new List<string> { f.Name.FirstName() })
